@@ -4,6 +4,16 @@ import java.io.File;
 import java.io.IOException;
 
 /**
+ * ============================================================================
+ * COMO EXECUTAR ESTA SUÍTE DE TESTES NO TERMINAL:
+ * ============================================================================
+ * 1. Compilar:
+ *    javac -encoding UTF-8 -d target/classes *.java
+ *
+ * 2. Executar a Suíte com 21 Asserções:
+ *    java -cp target/classes org.example.TestesBubbleSort
+ * ============================================================================
+ *
  * Suíte de Testes Automatizados para a aplicação "Estrutura de Dados S.A.".
  * <p>
  * Demonstra de forma clara e visual a homologação do algoritmo Bubble Sort,

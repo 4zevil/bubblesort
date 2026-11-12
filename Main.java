@@ -3,6 +3,19 @@ package org.example;
 import java.io.IOException;
 
 /**
+ * ============================================================================
+ * COMO EXECUTAR ESTA CLASSE NO TERMINAL:
+ * ============================================================================
+ * 1. Compilar:
+ *    javac -encoding UTF-8 -d target/classes *.java
+ *
+ * 2. Executar:
+ *    java -cp target/classes org.example.Main
+ *
+ * (Opcional - passando arquivos customizados):
+ *    java -cp target/classes org.example.Main Empresas_BubbleSort.txt Empresas_Ordenadas.txt
+ * ============================================================================
+ *
  * Ponto de entrada principal da aplicação "Estrutura de Dados S.A.".
  * <p>
  * Carrega a base de dados de empresas a partir do arquivo TXT,
