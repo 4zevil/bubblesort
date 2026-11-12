@@ -1,0 +1,118 @@
+# GUIA DE DEFESA TÉCNICA E APRESENTAÇÃO - GABRIEL LIRA FIGUEIRA
+Projeto: Estrutura de Dados S.A. (Bubble Sort Decrescente)
+Disciplina: Estrutura de Dados - Universidade Tiradentes (Unit)
+
+DIVISÃO DE RESPONSABILIDADES DO GRUPO:
+- João Luís: ArquivoServico.java e BubbleSortClassico.java
+- Eduarda: Registro.java, Ordenador.java e JavaDocs
+- Gabriel (Você): TODO O RESTO (BubbleSortParalelo.java, Arquitetura/Padrão Strategy, Main.java e TestesBubbleSort.java)
+
+================================================================================
+1. MAPA DO QUE FICOU SOB SUA RESPONSABILIDADE (GABRIEL)
+================================================================================
+Você liderou a parte mais técnica, algorítmica e arquitetural do projeto:
+1. Arquitetura de Software e Padrão Strategy (Polimorfismo).
+2. BubbleSortParalelo.java (Algoritmo de Transposição Par-Ímpar com Threads nativas).
+3. Main.java (Orquestração de fluxo, telemetria de tempo e interface CLI).
+4. TestesBubbleSort.java (Suíte de 21 testes automatizados cobrindo corner cases e carga).
+
+================================================================================
+2. DETALHAMENTO TÉCNICO FUNDO: BubbleSortParalelo.java
+================================================================================
+Se o professor perguntar: "Como você paralelizou o Bubble Sort se um elemento depende do vizinho?"
+
+A MECÂNICA (Transposição Par-Ímpar / Odd-Even Transposition Sort):
+No Bubble Sort normal, duas threads adjacentes competiriam pela mesma memória (Race Condition).
+Para resolver isso matematicamente, a ordenação roda em DUAS FASES ALTERNADAS:
+
+1. FASE ÍMPAR:
+   Compara e troca apenas pares que começam em índices ímpares:
+   (1, 2), (3, 4), (5, 6), (7, 8)...
+   Esses pares NÃO se tocam. Uma thread mexendo no par (1,2) nunca invade o par (3,4).
+
+2. FASE PAR:
+   Compara e troca apenas pares que começam em índices pares:
+   (0, 1), (2, 3), (4, 5), (6, 7)...
+   Da mesma forma, são pares totalmente disjuntos.
+
+PONTOS-CHAVE DO SEU CÓDIGO:
+a) Detecção de Hardware:
+   Usa Runtime.getRuntime().availableProcessors() para descobrir dinamicamente quantos
+   núcleos a máquina tem (ex: 4, 8, 16), sem travar um valor fixo.
+b) Fatiamento (Chunking):
+   Divide o vetor em fatias proporcionais entre as threads disponíveis.
+c) Barreira de Sincronização:
+   Usa threads[t].join() para que a thread principal só inicie a Fase Par depois que
+   TODAS as threads terminarem a Fase Ímpar.
+d) Fallback Inteligente:
+   Para coleções menores que 500 itens, o código desvia automaticamente para execução
+   sequencial direta, evitando o custo (overhead) de criar threads no Sistema Operacional.
+
+================================================================================
+3. ARQUITETURA E PADRÃO STRATEGY (POO & DRY)
+================================================================================
+- Por que você criou a interface Ordenador?
+  Para aplicar o Padrão de Projeto Strategy (Princípio Open/Closed do SOLID).
+  Isso descola o algoritmo de ordenação da classe Main.
+- Benefício Prático:
+  No Main.java, alternar entre o BubbleSortParalelo e o BubbleSortClassico custa
+  APENAS UMA LINHA de código. O resto do sistema (leitura, escrita, medição de tempo)
+  permanece 100% inalterado.
+
+================================================================================
+4. DETALHAMENTO TÉCNICO: Main.java
+================================================================================
+- Argumentos CLI dinâmicos: Permite passar arquivos diferentes via terminal
+  (args[0] e args[1]) sem precisar recompilar.
+- Telemetria de Precisão: Usa System.currentTimeMillis() medindo isoladamente:
+  * Tempo de I/O de Leitura
+  * Tempo de Processamento de Ordenação
+  * Tempo de I/O de Escrita
+- Validação Visual: Implementou o método exibirAmostraConsole() que imprime o Top 5
+  empresas mais valiosas e a empresa de menor valor da ponta final.
+
+================================================================================
+5. DETALHAMENTO TÉCNICO: TestesBubbleSort.java (21 Testes Automatizados)
+================================================================================
+Atende diretamente à exigência do professor ("Testes demonstrando o funcionamento").
+Você criou 5 cenários completos:
+
+- CENÁRIO 1: Validação Decrescente Estrita
+  Garante que o maior valor fica no índice [0] e o menor no último.
+  Prova que o Clássico e o Paralelo geram resultados IDÊNTICOS.
+- CENÁRIO 2: Casos de Borda (Corner Cases)
+  * Vetor vazio (não lança ArrayIndexOutOfBoundsException).
+  * Vetor com 1 elemento (mantém integridade).
+  * Empates (valores repetidos mantêm estabilidade).
+- CENÁRIO 3: Melhor e Pior Caso
+  * Melhor caso (já ordenado decrescente: valida a parada antecipada).
+  * Pior caso (ordem inversa crescente: inverte tudo com sucesso).
+- CENÁRIO 4: Persistência Física em Disco
+  Cria arquivo temporário TXT, lê, ordena, grava no destino e faz o cleanup.
+- CENÁRIO 5: Teste de Carga e Estresse
+  Gera massa de 5.000 empresas aleatórias em tempo de execução e valida que ambas
+  as estratégias ordenam com 100% de integridade.
+
+================================================================================
+6. COLA DE RESPOSTAS PARA PERGUNTAS DO PROFESSOR
+================================================================================
+Pergunta 1: "Por que você paralelizou o Bubble Sort?"
+Sua Resposta: "O enunciado mencionava 1.000.000 de empresas. Como o Bubble Sort é
+O(N²), uma única thread levaria tempo inviável. Implementei a Transposição Par-Ímpar,
+que é a formulação paralela clássica da computação, dividindo pares independentes
+entre os núcleos da CPU sem condição de corrida."
+
+Pergunta 2: "O que acontece se duas empresas tiverem exatamente o mesmo valor?"
+Sua Resposta: "Nosso algoritmo é estável. A condição de troca usa estritamente menor que
+(registros[j].getValor() < registros[j+1].getValor()). Em caso de empate, não há swap,
+preservando a ordem original de inserção."
+
+Pergunta 3: "Por que usaram vetor primitivo Registro[] em vez de ArrayList?"
+Sua Resposta: "Para eliminar chamadas de método virtuais (.get() e .set()) e reduzir
+a indireção de ponteiros na memória Heap. O array contíguo permite que o processador
+aproveite os caches L1/L2 durante os swaps constantes do Bubble Sort."
+
+Pergunta 4: "Como eu testo o Bubble Sort clássico no seu código?"
+Sua Resposta: "Graças ao padrão Strategy que estruturei com a interface Ordenador,
+basta alterar a atribuição na linha 53 da Main para 'new BubbleSortClassico()'.
+Nenhuma outra linha do projeto precisa ser alterada."
