@@ -1,7 +1,14 @@
 package org.example;
 
 import java.io.IOException;
+// # 1. Entrar na pasta do projeto:
+// cd "...\bubblesort"
 
+// # 2. Compilar todos os arquivos Java:
+// javac -encoding UTF-8 -d bin *.java
+
+// # 3. Executar o programa:
+// java -cp bin org.example.Main
 /**
  * Ponto de entrada principal da aplicação "Estrutura de Dados S.A.".
  * <p>
