@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html","k":"18"},{"p":"org.example","l":"ArquivoServico"},{"p":"org.example","l":"BubbleSortClassico"},{"p":"org.example","l":"BubbleSortParalelo"},{"p":"org.example","l":"Main"},{"p":"org.example","l":"Ordenador","k":"10"},{"p":"org.example","l":"Registro"}];updateSearchResults();
