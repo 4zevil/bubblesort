@@ -1,18 +1,12 @@
 package org.example;
 
 import java.io.IOException;
-// # 1. Entrar na pasta do projeto:
-// cd "...\bubblesort"
 
-// # 2. Compilar todos os arquivos Java:
-// javac -encoding UTF-8 -d bin *.java
-
-// # 3. Executar o programa:
-// java -cp bin org.example.Main
 /**
  * Ponto de entrada principal da aplicação "Estrutura de Dados S.A.".
  * <p>
  * Carrega a base de dados de empresas a partir do arquivo TXT,
+ * calcula previamente uma estimativa científica de tempo de ordenação,
  * aplica a ordenação por valor de mercado em ordem DECRESCENTE (do maior para o menor)
  * via algoritmo Bubble Sort (com suporte a alternância simples entre a versão clássica
  * e a versão paralela), e grava o resultado no arquivo final de saída.
@@ -21,7 +15,7 @@ import java.io.IOException;
  * @author Gabriel Lira Figueira
  * @author Eduarda Santana Santos
  * @author João Luís Aragão Rocha
- * @version 1.0
+ * @version 1.1
  */
 public class Main {
 
@@ -35,6 +29,7 @@ public class Main {
      * Executa o fluxo completo do sistema:
      * <ol>
      *   <li>Leitura do arquivo de empresas.</li>
+     *   <li>Estimativa prévia de tempo de ordenação (baseada em benchmark de CPU).</li>
      *   <li>Ordenação decrescente por valor de mercado.</li>
      *   <li>Persistência no arquivo de destino.</li>
      * </ol>
@@ -65,25 +60,29 @@ public class Main {
                 return;
             }
 
-            // 2. ESCOLHA DA ESTRATÉGIA DE ORDENAÇÃO (Fácil substituição com POO / Polimorfismo)
-            // Caso queira usar a versão clássica puramente sequencial, basta descomentar a linha abaixo:
+            // 2. ESCOLHA DA ESTRATÉGIA DE ORDENAÇÃO (Polimorfismo com Padrão Strategy)
+            // Caso queira usar a versão clássica pura, basta descomentar:
             // Ordenador ordenador = new BubbleSortClassico();
             Ordenador ordenador = new BubbleSortParalelo();
 
-            System.out.printf("%n[2/3] Ordenando registros com [%s] (Maior para Menor)...%n", ordenador.getNomeEstrategia());
+            // ESTIMATIVA DE TEMPO INTELIGENTE ANTES DE TRAVAR A MÁQUINA
+            exibirEstimativaTempo(registros.length);
+
+            // 3. EXECUÇÃO DA ORDENAÇÃO
+            System.out.printf("[2/3] Ordenando registros com [%s] (Maior para Menor)...%n", ordenador.getNomeEstrategia());
             long tempoInicioOrdenacao = System.currentTimeMillis();
             ordenador.ordenarDecrescente(registros);
             long tempoFimOrdenacao = System.currentTimeMillis();
             System.out.printf("Ordenação concluída com sucesso em %d ms!%n", (tempoFimOrdenacao - tempoInicioOrdenacao));
 
-            // 3. ESCRITA NO ARQUIVO DE SAÍDA
+            // 4. ESCRITA NO ARQUIVO DE SAÍDA
             System.out.printf("%n[3/3] Gravando registros ordenados em '%s'... ", arquivoDestino);
             long tempoInicioEscrita = System.currentTimeMillis();
             ArquivoServico.gravarArquivo(registros, arquivoDestino);
             long tempoFimEscrita = System.currentTimeMillis();
             System.out.printf("Concluído em %d ms!%n", (tempoFimEscrita - tempoInicioEscrita));
 
-            // 4. EXIBIÇÃO DE AMOSTRA DOS RESULTADOS NO CONSOLE
+            // 5. EXIBIÇÃO DE AMOSTRA DOS RESULTADOS NO CONSOLE
             exibirAmostraConsole(registros);
 
             System.out.println("\n>>> PROCESSO CONCLUÍDO COM SUCESSO! <<<");
@@ -94,6 +93,57 @@ public class Main {
         } catch (NumberFormatException e) {
             System.err.println("\n[ERRO DE FORMATO]: Valor numérico inválido encontrado no arquivo.");
         }
+    }
+
+    /**
+     * Calcula e exibe uma estimativa do tempo total necessário para o Bubble Sort,
+     * rodando um micro-benchmark em lote reduzido para medir a velocidade real da CPU.
+     *
+     * @param n Quantidade de registros carregados
+     */
+    private static void exibirEstimativaTempo(int n) {
+        if (n <= 500) {
+            return; // Quantidades pequenas executam instantaneamente
+        }
+
+        System.out.println("\n--------------------------------------------------------------------------------");
+        System.out.println("  ESTIMATIVA MATEMÁTICA DE PROCESSAMENTO (Complexidade O(N²))");
+        System.out.println("--------------------------------------------------------------------------------");
+
+        // Total teórico de operações no Bubble Sort: (N * (N - 1)) / 2
+        double totalOperacoes = ((double) n * (n - 1)) / 2.0;
+        System.out.printf("  Total de comparações estimadas: %,.0f operações%n", totalOperacoes);
+
+        // Medição de velocidade em tempo real: roda um mini-teste de 2.000 itens para aferir a CPU atual
+        int amostra = 2000;
+        Registro[] miniVetor = new Registro[amostra];
+        for (int i = 0; i < amostra; i++) {
+            miniVetor[i] = new Registro("E" + i, "0", amostra - i);
+        }
+
+        long t0 = System.nanoTime();
+        new BubbleSortClassico().ordenarDecrescente(miniVetor);
+        long t1 = System.nanoTime();
+
+        double opsAmostra = ((double) amostra * (amostra - 1)) / 2.0;
+        double segundosAmostra = (t1 - t0) / 1_000_000_000.0;
+        double velocidadePorSegundo = opsAmostra / Math.max(0.001, segundosAmostra);
+
+        // Tempo estimado total em segundos
+        double segundosTotais = totalOperacoes / velocidadePorSegundo;
+
+        if (segundosTotais < 1.0) {
+            System.out.println("  Tempo estimado: Menos de 1 segundo.");
+        } else if (segundosTotais < 60.0) {
+            System.out.printf("  Tempo estimado: ~%.1f segundos.%n", segundosTotais);
+        } else if (segundosTotais < 3600.0) {
+            System.out.printf("  Tempo estimado: ~%.1f minutos.%n", (segundosTotais / 60.0));
+        } else {
+            double horas = segundosTotais / 3600.0;
+            System.out.printf("  Tempo estimado: ~%.1f HORAS (%.1f dias de processamento contínuo)%n", horas, (horas / 24.0));
+            System.out.println("  [AVISO]: O Bubble Sort O(N²) requer centenas de bilhões de passos para esse volume.");
+        }
+        System.out.println("--------------------------------------------------------------------------------\n");
     }
 
     /**
